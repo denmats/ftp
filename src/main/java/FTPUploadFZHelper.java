@@ -3,6 +3,9 @@ import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 
 import java.io.*;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,9 +20,15 @@ public class FTPUploadFZHelper {
         Set<String> listOfFilesForArchiving = listFilesUsingJavaIO();
         listOfFilesForArchiving.stream().forEach(System.out::println);
 
+        //adds date format to distinguish archive files on the server
+        Date date = new Date();
+        SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss");
+        String firstRemoteFile = "archive_"+formatter.format(date)+".zip";
+
+
         //Zip files from the directory to archive
         try {
-            FileOutputStream fos = new FileOutputStream("C:\\Users\\matsuied\\Desktop\\ftp\\archive.zip");
+            FileOutputStream fos = new FileOutputStream("C:\\Users\\matsuied\\Desktop\\ftp\\"+firstRemoteFile);
             ZipOutputStream zipOut = new ZipOutputStream(fos);
             for (String srcFile : listOfFilesForArchiving) {
                 File fileToZip = new File("C:\\Users\\matsuied\\Desktop\\ftp\\"+srcFile);
@@ -44,7 +53,7 @@ public class FTPUploadFZHelper {
         //uploading to remote server
         String server = "192.168.0.101";
         int port = 21;
-        String user = "denys";
+        String user = "denys1";
         String pass = "1234";
 
         FTPClient ftpClient = new FTPClient();
@@ -58,12 +67,11 @@ public class FTPUploadFZHelper {
 
 
         // uploads zip archive an InputStream
-            File dirForArchiving = new File("C:\\Users\\matsuied\\Desktop\\ftp\\archive.zip");
+            File dirForArchiving = new File("C:\\Users\\matsuied\\Desktop\\ftp\\"+firstRemoteFile);
 
-            String firstRemoteFile = "archive.zip";
             InputStream inputStream = new FileInputStream(dirForArchiving);
 
-            System.out.println("Start uploading first file...");
+            System.out.println("Start uploading files...");
             boolean done = ftpClient.storeFile(firstRemoteFile, inputStream);
             inputStream.close();
             if (done) {
@@ -86,11 +94,11 @@ public class FTPUploadFZHelper {
 
         //Remove all files
         removeAllFilesAfterUploadingToRemoteServer();
-        
+
     }
 
     private static Set<String> listFilesUsingJavaIO() {
-        return Stream.of(new File("C:\\Users\\matsuied\\Desktop\\ftp").listFiles())
+        return Stream.of(Objects.requireNonNull(new File("C:\\Users\\matsuied\\Desktop\\ftp").listFiles()))
                 .filter(file -> !file.isDirectory())
                 .map(File::getName)
                 .collect(Collectors.toSet());
